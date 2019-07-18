@@ -94,7 +94,9 @@ def send_message(option, client_socket = "", message = "no message"):
     GAME = Game()
     GAME.shuffle()
     new_board = GAME.board[:]
-    print(new_board)
+    print("Board: ")
+    for row in new_board:
+      print(row)
 
     # turn the board into bytes
     message = pickle.dumps(new_board)

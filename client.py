@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import sys
 import socket
 import select
 import errno
@@ -122,7 +121,7 @@ def receive_message():
 
 
 def quit():
-  print("Press Enter to exit")
+  print("Exiting")
   exit()
 
 
@@ -153,26 +152,3 @@ if __name__ == '__main__':
         if message == 'y':
           client_ready = True
           send_message("ready", message)
-
-
-# while True:
-
-#   full_msg = b""
-#   new_msg = True
-#   while True:
-#     msg = s.recv(16)
-
-#     if new_msg:
-#       msglen = int(msg[:HEADERSIZE].strip())
-#       print(f"New message length: {msglen}")
-#       new_msg = False
-
-#     full_msg += msg
-
-#     if len(full_msg)-HEADERSIZE == msglen:
-#       print("full msg recvd")
-#       d = pickle.loads(full_msg[HEADERSIZE:])
-#       print(d)
-
-#       new_msg = True
-#       full_msg = b""
