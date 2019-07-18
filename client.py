@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
+import sys
 import socket
 import select
 import errno
 import pickle
+from game import Game
 
 
 
-
-HEADER_LENGTH  = 10
+HEADER_LENGTH  = 15
 PORT           = 5555
 
-# get IP
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 80))
-print(f"IP: {s.getsockname()[0]}")
+try:
+  # get IP
+  s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  s.connect(("8.8.8.8", 80))
+  IP = s.getsockname()[0]
+  s.close()
+except:
+  print("No network -> local only")
+  IP = "127.0.0.1"
 
-IP = s.getsockname()[0]
-
-s.close()
+print(f"IP: {IP}")
 
 client_username = input("Username: ")
 # if the username is 'reader', the client can not send messages, but sees all new messages inmediately
@@ -31,60 +35,107 @@ client_socket.setblocking(False)
 
 # indicates if client is ready
 client_ready = False
+RUN = True
 
-def send_message(message):
+# header format:
+# message_size(int) + " " + option
+#
+# options:
+#
+#  CLIENT
+#  - "init": initial message from client username
+#  - "user": send username -> followed by second message
+#  - "ready": if client in ready
+#  - "result": client game results
+#
+#  SERVER
+#  - "board": server sending the shuffled board to the players
+#  - "readyinf": other players being ready
+#  - "stat": game statistics
+
+def send_message(option, message):
   if not len(message):
     print("Message is empty -> not sending")
     return False
 
+  if option not in ["init", "ready", "result"]:
+    print("Wrong header option")
+    return False
+
+
   message = message.encode("utf-8")
-  message_header = f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
+  msgstr = f"{len(message)} {option}"
+  message_header = f"{msgstr:<{HEADER_LENGTH}}".encode('utf-8')
   client_socket.send(message_header + message)
+
+
+def receive_message():
+  try:
+    # get message header
+    message_header = client_socket.recv(HEADER_LENGTH)
+
+    # if there is no message
+    if not len(message_header):
+      return False
+
+    # get message length and option
+    message_length = int(message_header.decode("utf-8").split()[0])
+    option =         str(message_header.decode("utf-8").split()[1])
+
+    # get message
+    message = client_socket.recv(message_length)
+
+    if option not in ["board", "readyinf", "stat"]:
+      print("Wrong header option")
+      return False
+
+    elif option == "readyinf":
+      info = pickle.loads(message)
+      print('\nNot ready:')
+
+      for cli in info[0]:
+        print(f"  {cli}")
+
+      print('Ready:')
+
+      for cli in info[1]:
+        print(f"  {cli}")
+
+    elif option == "board":
+      board = pickle.loads(message)
+      GAME = Game()
+      GAME.board = board[:]
+      GAME.run()
+      stats = f"{GAME.steps} {GAME.time}"
+      send_message("result", stats)
+      print("\nwaiting for others...")
+
+    elif option == "stat":
+      stat_board = pickle.loads(message)
+      for row in stat_board:
+        print(row)
+      quit()
+
+  except Exception as e:
+    # print(f"Recieve error {str(e)}")
+    return False
+
+
+def quit():
+  print("Press Enter to exit")
+  exit()
 
 
 if __name__ == '__main__':
   # send first message -> server saves username, header
-  send_message(client_username)
+  send_message("init", client_username)
 
-  while True:
+  while RUN:
     message = ""
 
-    if client_username != 'reader':
-      if not client_ready:
-        message = input("Are you ready? (y/n) : ").lower()
-        if message == 'y': client_ready = True
-
-    # if there is a message to send
-    if message:
-      send_message(message)
-
     try:
-      while True:
-        # recieve stuff
-
-        # get username header
-        username_header = client_socket.recv(HEADER_LENGTH)
-        if not len(username_header):
-          print("Connection closed by server")
-          exit()
-
-        # get the length of the username
-        username_length = int(username_header.decode("utf-8").strip())
-        # get the username
-        username = client_socket.recv(username_length).decode("utf-8")
-
-        # get message header
-        message_header = client_socket.recv(HEADER_LENGTH)
-        if not len(username_header):
-          print("No message!")
-          continue
-
-        # get the length of the message
-        message_length = int(message_header.decode("utf-8").strip())
-        # get the message
-        message = client_socket.recv(message_length).decode("utf-8")
-
-        print(f"{username} : {message}")
+      # recieve stuff
+      receive_message()
 
     except IOError as e:
       if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
@@ -95,6 +146,13 @@ if __name__ == '__main__':
     except Exception as e:
       print(str(e))
       exit()
+
+    if client_username != 'reader':
+      if not client_ready:
+        message = input("Are you ready? (y/n) : ").lower()
+        if message == 'y':
+          client_ready = True
+          send_message("ready", message)
 
 
 # while True:
