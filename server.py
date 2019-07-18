@@ -254,8 +254,6 @@ while True:
       for client in clients:
         if not clients[client]['done']:
           alldone = False
-    else:
-      alldone = False
 
     if alldone:
       # EVALUATE STATS
