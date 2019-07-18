@@ -21,8 +21,12 @@ except:
   IP = "127.0.0.1"
 
 print(f"IP: {IP}")
+print("If this does not match the server IP try typing that in (otherwise just hit Enter)")
+dif_ip = input("Type different IP: ")
+if len(dif_ip):
+  IP = dif_ip
 
-client_username = input("Username: ")
+client_username = input("\nUsername: ")
 # if the username is 'reader', the client can not send messages, but sees all new messages inmediately
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

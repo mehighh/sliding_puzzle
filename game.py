@@ -42,7 +42,7 @@ class Game:
     while not self.game_over:
       self.out()
       movestr = input("Move: ")
-      if movestr[0] not in ['v', 'h'] or int(movestr[1]) not in [0,1,2,3]:
+      if len(movestr) != 2 or movestr[0] not in ['v', 'h'] or int(movestr[1]) not in [0,1,2,3]:
         print("Wrong input")
         continue
 
