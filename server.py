@@ -5,7 +5,7 @@ import copy
 import time
 import pickle
 
-from game import Game
+from term_game import Game
 
 
 

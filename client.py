@@ -3,6 +3,7 @@ import socket
 import select
 import errno
 import pickle
+import pygame
 from game import Game
 
 
@@ -105,10 +106,16 @@ def receive_message():
         print(f"  {cli}")
 
     elif option == "board":
+      print('Recieveing boeard')
       board = pickle.loads(message)
-      GAME = Game()
+
+      pygame.init()
+      SIZE = (400,400)
+      S = pygame.display.set_mode(SIZE)
+      GAME = Game(S)
       GAME.board = board[:]
       GAME.run()
+
       stats = f"{GAME.steps} {GAME.time}"
       send_message("result", stats)
       print("\nwaiting for others...")
