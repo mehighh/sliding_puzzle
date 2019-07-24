@@ -69,6 +69,7 @@ class Client:
     # indicates if client is ready
     self.READY  = False
     self.RUN    = True
+    self.OVER   = False
     self.INFO   = []
 
   def send_message(self, option, message):
@@ -121,20 +122,30 @@ class Client:
 
       elif option == "board":
         print('Recieveing boeard')
-        board = pickle.loads(message)
 
-        GAME = Game(SCREEN)
-        GAME.board = board[:]
-        GAME.run()
+        try:
+          board = pickle.loads(message)
 
-        stats = f"{GAME.steps} {GAME.time}"
-        self.send_message("result", stats)
-        print("\nwaiting for others...")
+          # start the game with the received board
+          GAME = Game(self.SCREEN)
+          GAME.board = board[:]
+          GAME.run()
+
+          # send score to server
+          stats = f"{GAME.steps} {GAME.time}"
+          self.send_message("result", stats)
+          print("\nwaiting for others...")
+          self.OVER = True
+
+        except Exception as e:
+          print(f"Game error: {str(e)}")
 
       elif option == "stat":
+        # receive and print statistics
         stat_board = pickle.loads(message)
         for row in stat_board:
           print(row)
+
         quit()
 
     except Exception as e:
@@ -148,23 +159,31 @@ class Client:
 
 
   def draw(self):
-    readytext  = self.FONT.render(f'Ready:',     False, (255,255,255))
-    nreadytext = self.FONT.render(f'Not ready:', False, (255,255,255))
+    if self.OVER:
+      textsurface = self.FONT.render('Waiting for other players...', False, (255,255,255))
+      self.SCREEN.blit(textsurface, (0,0))
+    else:
+      readytext  = self.FONT.render(f'Ready:',     False, (255,255,255))
+      nreadytext = self.FONT.render(f'Not ready:', False, (255,255,255))
 
-    self.SCREEN.blit(readytext,  (0              ,0))
-    self.SCREEN.blit(nreadytext, (int(self.SIZE[0]/2) ,0))
+      self.SCREEN.blit(readytext,  (0                   ,0))
+      self.SCREEN.blit(nreadytext, (int(self.SIZE[0]/2) ,0))
 
-    if len(self.INFO):
-      for i,nr in enumerate(self.INFO[0]):
-        textsurface = self.FONT.render(f'{nr}', False, (255,255,255))
-        self.SCREEN.blit(textsurface, (int(self.SIZE[0]/2), (i+1)*self.FONT_SIZE))
+      # info about other players being ready or not
+      if len(self.INFO):
+        for i,nr in enumerate(self.INFO[0]):
+          textsurface = self.FONT.render(f'{nr}', False, (255,255,255))
+          self.SCREEN.blit(textsurface, (int(self.SIZE[0]/2), (i+1)*self.FONT_SIZE))
 
-      for i,r in enumerate(self.INFO[1]):
-        textsurface = self.FONT.render(f'{r}', False, (255,255,255))
-        self.SCREEN.blit(textsurface, (0, (i+1)*self.FONT_SIZE))
+        for i,r in enumerate(self.INFO[1]):
+          textsurface = self.FONT.render(f'{r}', False, (255,255,255))
+          self.SCREEN.blit(textsurface, (0, (i+1)*self.FONT_SIZE))
 
-    if not self.READY:
-      pygame.draw.rect(self.SCREEN, (255,0,0), (self.SIZE[0]-20, self.SIZE[0]-20, 20, 20), 0)
+      # button
+      if not self.READY:
+        pygame.draw.rect(self.SCREEN, (255,0,0), ((self.SIZE[0]/2)-30, self.SIZE[1]-20, 60, 20), 0)
+        textsurface = self.FONT.render(f'Ready', False, (255,255,255))
+        self.SCREEN.blit(textsurface, ((self.SIZE[0]/2)-30, self.SIZE[1]-20))
 
 
   def run(self):
@@ -174,6 +193,13 @@ class Client:
         if event.type == pygame.QUIT:
           pygame.quit()
           exit()
+
+        elif event.type == pygame.MOUSEBUTTONDOWN and not self.READY:
+          # get the position of the mouse
+          mouse_pos = pygame.mouse.get_pos()
+          if mouse_pos[0] >= (self.SIZE[0]/2)-30 and mouse_pos[0] <= (self.SIZE[0]/2)+30 and mouse_pos[1] >= self.SIZE[1]-20 and mouse_pos[1] <= self.SIZE[1]:
+            self.send_message("ready", "y")
+            self.READY = True
 
       message = ""
 

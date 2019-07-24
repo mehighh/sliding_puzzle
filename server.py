@@ -51,7 +51,6 @@ clients = {}
 #
 #  CLIENT
 #  - "init": initial message from client username
-#  - "user": send username -> followed by second message
 #  - "ready": if client in ready
 #  - "result": client game results
 #
@@ -80,9 +79,10 @@ def send_message(option, client_socket = "", message = "no message"):
       elif clients[client]['ready'] == True:
         readylist[1].append(clients[client]['data'].decode('utf-8'))
 
-    # turn the list into bytes
+    # magic (turns the list into bytes)
     message = pickle.dumps(readylist)
 
+    # cunstruct message header
     msgstr = f"{len(message)} {option}"
     message_header = f"{msgstr:<{HEADER_LENGTH}}".encode('utf-8')
 

@@ -77,7 +77,7 @@ class Game:
           mouse_pos[1] = int(mouse_pos[1] / self.grid_size)
           print(mouse_pos)
 
-        elif event.type == pygame.MOUSEBUTTONUP:
+        elif event.type == pygame.MOUSEBUTTONUP and swipe == True:
           print("Mouse up")
 
           # get end position of swipe
@@ -106,14 +106,20 @@ class Game:
             print("Wrong input")
             continue
 
-          self.steps += 1
-          self.move(movestr[0], int(movestr[1]))
-          self.check_if_over()
+          try:
+            self.move(movestr[0], int(movestr[1]))
+            self.steps += 1
+            self.check_if_over()
+          except Exception as e:
+            print(f"Move error: {str(e)}")
 
-      self.screen.fill(0)
-      self.draw()
+      try:
+        self.screen.fill(0)
+        self.draw()
 
-      pygame.display.flip()
+        pygame.display.flip()
+      except Exception as e:
+        print(f"Game run error: {str(e)}")
 
 
   def draw(self):
@@ -136,6 +142,8 @@ class Game:
 
 
   def out(self):
+    print("wtf")
+    print(self.board)
     for row in self.board:
       print(row)
 
