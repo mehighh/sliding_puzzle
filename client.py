@@ -66,10 +66,10 @@ class Client:
     # send first message -> server saves username, header
     self.send_message("init", self.username)
 
-    # indicates if client is ready
     self.READY  = False
     self.RUN    = True
     self.OVER   = False
+    self.STAT   = False
     self.INFO   = []
 
   def send_message(self, option, message):
@@ -146,7 +146,7 @@ class Client:
         for row in stat_board:
           print(row)
 
-        quit()
+        self.STAT = True
 
     except Exception as e:
       # print(f"Recieve error {str(e)}")
@@ -160,8 +160,11 @@ class Client:
 
   def draw(self):
     if self.OVER:
-      textsurface = self.FONT.render('Waiting for other players...', False, (255,255,255))
-      self.SCREEN.blit(textsurface, (0,0))
+      if self.STAT:
+        pass
+      else:
+        textsurface = self.FONT.render('Waiting for other players...', False, (255,255,255))
+        self.SCREEN.blit(textsurface, (0,0))
     else:
       readytext  = self.FONT.render(f'Ready:',     False, (255,255,255))
       nreadytext = self.FONT.render(f'Not ready:', False, (255,255,255))

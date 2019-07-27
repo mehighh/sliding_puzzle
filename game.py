@@ -135,7 +135,7 @@ class Game:
   def shuffle(self):
     test_board = copy.deepcopy(self.board)
     while self.board == test_board:
-      for _ in range(2):
+      for _ in range(100):
         self.move(random.choice(['v', 'h']),
                   random.randint(0,3))
         # self.out()
